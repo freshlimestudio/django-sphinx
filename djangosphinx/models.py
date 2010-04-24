@@ -704,9 +704,17 @@ class SphinxInstanceManager(object):
         self._instance = instance
         self._index = index
         
+    def _get_sphinx_client(self):
+        client = sphinxapi.SphinxClient()
+        client.SetServer(SPHINX_SERVER, SPHINX_PORT)
+        return client
+
     def update(self, **kwargs):
-        assert sphinxapi.VER_COMMAND_SEARCH >= 0x113, "You must upgrade sphinxapi to version 0.98 to use UpdateAttributes."
-        sphinxapi.UpdateAttributes(self._index, kwargs.keys(), dict(self.instance.pk, map(to_sphinx, kwargs.values())))
+        assert(sphinxapi.VER_COMMAND_SEARCH >= 0x113, "You must upgrade sphinxapi to version 0.98 to use UpdateAttributes.")
+        attributes = {}
+        attributes[int(self._instance.pk)] = map(to_sphinx, kwargs.values())
+        client = self._get_sphinx_client()
+        client.UpdateAttributes(self._index, kwargs.keys(), attributes)
 
 class SphinxSearch(object):
     def __init__(self, index=None, using=None, **kwargs):
