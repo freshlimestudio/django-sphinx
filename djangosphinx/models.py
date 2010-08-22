@@ -710,7 +710,7 @@ class SphinxInstanceManager(object):
         return client
 
     def update(self, **kwargs):
-        assert(sphinxapi.VER_COMMAND_SEARCH >= 0x113, "You must upgrade sphinxapi to version 0.98 to use UpdateAttributes.")
+        assert sphinxapi.VER_COMMAND_SEARCH >= 0x113, "You must upgrade sphinxapi to version 0.98 to use UpdateAttributes."
         attributes = {}
         attributes[int(self._instance.pk)] = map(to_sphinx, kwargs.values())
         client = self._get_sphinx_client()
