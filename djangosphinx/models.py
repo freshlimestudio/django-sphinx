@@ -648,6 +648,16 @@ class SphinxQuerySet(object):
         client = self._get_sphinx_client()
 
         docs = [getattr(instance, f) for f in fields]
+
+        #Checks if any of the items in 'docs' list are neither strings nor unicode 
+        #objects. Upon finding such ones, converts them to strings with repr()
+        #function and replaces the original value with the converted one.
+        for index, doc in enumerate(docs):
+            if (not (isinstance(doc, str)) and (not isinstance(doc, unicode))):
+                docs[index] = repr(doc)
+            if isinstance(docs[index], unicode):
+                docs[index] = docs[index].encode('utf-8')
+
         if isinstance(self._passages_opts, dict):
             opts = self._passages_opts
         else:
