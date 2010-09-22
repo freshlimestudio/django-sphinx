@@ -203,7 +203,7 @@ class SphinxQuerySet(object):
         self._query                 = ''
         self.__metadata             = None
         self._offset                = 0
-        self._limit                 = 20
+        self._limit                 = getattr(settings, 'SPHINX_QUERYSET_CACHE_LIMIT', 20)
 
         self._groupby               = None
         self._sort                  = None
@@ -211,7 +211,7 @@ class SphinxQuerySet(object):
 
         self._passages              = False
         self._passages_opts         = {}
-        self._maxmatches            = 1000
+        self._maxmatches            = getattr(settings, 'SPHINX_MAX_MATCHES', 1000)
         self._result_cache          = None
         self._mode                  = sphinxapi.SPH_MATCH_ALL
         self._rankmode              = getattr(sphinxapi, 'SPH_RANK_PROXIMITY_BM25', None)
