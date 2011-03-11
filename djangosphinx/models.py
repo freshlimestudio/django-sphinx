@@ -203,7 +203,7 @@ class SphinxQuerySet(object):
         self._query                 = ''
         self.__metadata             = None
         self._offset                = 0
-        self._limit                 = 20
+        self._limit                 = getattr(settings, 'SPHINX_QUERYSET_CACHE_LIMIT', 20)
 
         self._groupby               = None
         self._sort                  = None
@@ -211,7 +211,7 @@ class SphinxQuerySet(object):
 
         self._passages              = False
         self._passages_opts         = {}
-        self._maxmatches            = 1000
+        self._maxmatches            = getattr(settings, 'SPHINX_MAX_MATCHES', 1000)
         self._result_cache          = None
         self._mode                  = sphinxapi.SPH_MATCH_ALL
         self._rankmode              = getattr(sphinxapi, 'SPH_RANK_PROXIMITY_BM25', None)
@@ -648,6 +648,16 @@ class SphinxQuerySet(object):
         client = self._get_sphinx_client()
 
         docs = [getattr(instance, f) for f in fields]
+
+        #Checks if any of the items in 'docs' list are neither strings nor unicode 
+        #objects. Upon finding such ones, converts them to strings with repr()
+        #function and replaces the original value with the converted one.
+        for index, doc in enumerate(docs):
+            if (not (isinstance(doc, str)) and (not isinstance(doc, unicode))):
+                docs[index] = repr(doc)
+            if isinstance(docs[index], unicode):
+                docs[index] = docs[index].encode('utf-8')
+
         if isinstance(self._passages_opts, dict):
             opts = self._passages_opts
         else:
@@ -704,9 +714,17 @@ class SphinxInstanceManager(object):
         self._instance = instance
         self._index = index
         
+    def _get_sphinx_client(self):
+        client = sphinxapi.SphinxClient()
+        client.SetServer(SPHINX_SERVER, SPHINX_PORT)
+        return client
+
     def update(self, **kwargs):
         assert sphinxapi.VER_COMMAND_SEARCH >= 0x113, "You must upgrade sphinxapi to version 0.98 to use UpdateAttributes."
-        sphinxapi.UpdateAttributes(self._index, kwargs.keys(), dict(self.instance.pk, map(to_sphinx, kwargs.values())))
+        attributes = {}
+        attributes[int(self._instance.pk)] = map(to_sphinx, kwargs.values())
+        client = self._get_sphinx_client()
+        client.UpdateAttributes(self._index, kwargs.keys(), attributes)
 
 class SphinxSearch(object):
     def __init__(self, index=None, using=None, **kwargs):
