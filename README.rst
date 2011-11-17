@@ -19,6 +19,9 @@ To install the latest development version (updated quite often)::
 
 *Note:* You will need to install the ``sphinxapi.py`` package into your Python Path or use one of the included versions. To use the included version, you must specify the following in your ``settings.py`` file::
 
+	# Sphinx 1.10-beta
+	SPHINX_API_VERSION = 0x117
+
 	# Sphinx 0.9.9
 	SPHINX_API_VERSION = 0x116
 

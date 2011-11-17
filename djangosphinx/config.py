@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys, os.path, warnings
+import os, sys, os.path
 
 # Add the project to the python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
