@@ -2,3 +2,4 @@ build/
 dist/
 *.pyc
 django_sphinx.egg-info/
+.idea
