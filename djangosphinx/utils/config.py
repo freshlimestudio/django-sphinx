@@ -13,6 +13,9 @@ __all__ = ('generate_config_for_model', 'generate_config_for_models')
 
 DJANGO_MINOR_VERSION = float(".".join([str(django.VERSION[0]), str(django.VERSION[1])]))
 
+def relative_path(*args):
+    return os.path.abspath(os.path.join(settings.SPHINX_ROOT, *args))
+
 def _get_database_engine():
     if DJANGO_MINOR_VERSION < 1.2:
         if settings.DATABASE_ENGINE == 'mysql':
@@ -65,8 +68,8 @@ if DJANGO_MINOR_VERSION < 1.2:
         'database_name': settings.DATABASE_NAME,
         'database_user': settings.DATABASE_USER,
         'database_password': settings.DATABASE_PASSWORD,
-        'log_file': '/var/log/sphinx/searchd.log',
-        'data_path': '/var/data',
+        'log_file':  relative_path('log', 'searchd.log'),
+        'data_path': relative_path('data'),
     }
 else:
     DEFAULT_SPHINX_PARAMS = {
@@ -76,8 +79,8 @@ else:
         'database_name': settings.DATABASES['default']['NAME'],
         'database_user': settings.DATABASES['default']['USER'],
         'database_password': settings.DATABASES['default']['PASSWORD'],
-        'log_file': '/var/log/sphinx/searchd.log',
-        'data_path': '/var/data',
+        'log_file':  relative_path('log', 'searchd.log'),
+        'data_path': relative_path('data'),
     }
 
 def get_index_context(index):
@@ -85,6 +88,7 @@ def get_index_context(index):
     params.update({
         'index_name': index,
         'source_name': index,
+        'index_path': relative_path('data', index)
     })
 
     return params
@@ -121,7 +125,7 @@ def generate_config_for_model(model_class, index=None, sphinx_params={}):
     Generates a sample configuration including an index and source for
     the given model which includes all attributes and date fields.
     """
-    return generate_source_for_model(model_class, index, sphinx_params) + "\n\n" + generate_index_for_model(model_class, index, sphinx_params)
+    return generate_source_for_model(model_class, index, sphinx_params) + "\n\n" + generate_index_for_model(model_class, index, sphinx_params) + "\n\n"
 
 def generate_index_for_model(model_class, index=None, sphinx_params={}):
     """Generates a source configmration for a model."""
@@ -132,7 +136,7 @@ def generate_index_for_model(model_class, index=None, sphinx_params={}):
     
     params = get_index_context(index)
     params.update(sphinx_params)
-    
+
     c = Context(params)
     
     return t.render(c)
@@ -211,3 +215,4 @@ def generate_source_for_models(model_classes, index=None, sphinx_params={}):
     c = Context(params)
     
     return t.render(c)
+
