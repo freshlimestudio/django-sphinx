@@ -1,3 +1,4 @@
+# shpinx.conf tepmplate for django
 source base
 {
 	type			= mysql
