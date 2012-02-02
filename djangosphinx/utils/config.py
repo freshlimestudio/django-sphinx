@@ -1,6 +1,6 @@
 import django
 from django.conf import settings
-from django.template import Template, Context
+from django.template import Template, Context, RequestContext
 
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
@@ -8,6 +8,12 @@ from django.contrib.contenttypes.models import ContentType
 import os.path
 
 import djangosphinx.apis.current as sphinxapi
+
+if 'coffin' in settings.INSTALLED_APPS:
+    import jinja2
+    from coffin import shortcuts as loader
+else:
+    from django.template import loader
 
 __all__ = ('generate_config_for_model', 'generate_config_for_models')
 
@@ -215,4 +221,31 @@ def generate_source_for_models(model_classes, index=None, sphinx_params={}):
     c = Context(params)
     
     return t.render(c)
+
+def generate_config_from_template():
+    template_name = getattr(settings, 'SPHINX_CONFIG_TEMPLATE', 'conf/sphinx.conf')
+    t = loader.get_template(template_name)
+    context = {
+        'SPHINX_HOST': getattr(settings, 'SPHINX_HOST', '127.0.0.1'),
+        'SPHINX_PORT': getattr(settings, 'SPHINX_PORT', '3312'),
+        'relative_path': relative_path,
+    }
+    if getattr(settings, 'DATABASES', None):
+        context.update({
+            'DATABASE_HOST': settings.DATABASES['default']['HOST'],
+            'DATABASE_PASSWORD': settings.DATABASES['default']['PASSWORD'],
+            'DATABASE_USER': settings.DATABASES['default']['USER'],
+            'DATABASE_PORT': settings.DATABASES['default']['PORT'],
+            'DATABASE_NAME': settings.DATABASES['default']['NAME'],
+        })
+    else:
+        context.update({
+            'DATABASE_HOST': settings.DATABASE_HOST,
+            'DATABASE_PASSWORD': settings.DATABASE_PASSWORD,
+            'DATABASE_USER': settings.DATABASE_USER,
+            'DATABASE_PORT': settings.DATABASE_PORT,
+            'DATABASE_NAME': settings.DATABASE_NAME,
+        })
+    return t.render(Context(context))
+
 
