@@ -4,6 +4,12 @@ Please Note: You will need to create your own sphinx indexes and install sphinx 
 
 *There will no longer be release packages available. Please use Git to checkout the latest version.*
 
+Fork Details
+------------
+
+This fork has a few fixes merged in. Additionally, it supports Sphinx 1.10-beta and Sphinx 2.0.3.
+
+
 Installation
 ------------
 
@@ -18,6 +24,9 @@ To install the latest development version (updated quite often)::
 	sudo python setup.py install
 
 *Note:* You will need to install the ``sphinxapi.py`` package into your Python Path or use one of the included versions. To use the included version, you must specify the following in your ``settings.py`` file::
+
+	# Sphinx 2.0.3
+	SPHINX_API_VERSION = 0x119
 
 	# Sphinx 1.10-beta
 	SPHINX_API_VERSION = 0x117
