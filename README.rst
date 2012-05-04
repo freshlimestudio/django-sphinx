@@ -2,7 +2,13 @@ This is a layer that functions much like the Django ORM does except it works on 
 
 Please Note: You will need to create your own sphinx indexes and install sphinx on your server to use this app.
 
-*There will no longer be release packages available. Please use SVN to checkout the latest trunk version, as it should always be stable and current.*
+*There will no longer be release packages available. Please use Git to checkout the latest version.*
+
+Fork Details
+------------
+
+This fork has a few fixes merged in. Additionally, it supports Sphinx 1.10-beta and Sphinx 2.0.3.
+
 
 Installation
 ------------
@@ -17,7 +23,13 @@ To install the latest development version (updated quite often)::
 	cd django-sphinx
 	sudo python setup.py install
 
-*Note:* You will need to install the `sphinxapi.py` package into your Python Path or use one of the included versions. To use the included version, you must specify the following in your `settings.py` file::
+*Note:* You will need to install the ``sphinxapi.py`` package into your Python Path or use one of the included versions. To use the included version, you must specify the following in your ``settings.py`` file::
+
+	# Sphinx 2.0.3
+	SPHINX_API_VERSION = 0x119
+
+	# Sphinx 1.10-beta
+	SPHINX_API_VERSION = 0x117
 
 	# Sphinx 0.9.9
 	SPHINX_API_VERSION = 0x116
@@ -69,14 +81,15 @@ The following is some example usage::
 
 
 Some additional methods:
-* count()
-* extra() (passed to the queryset)
-* all() (does nothing)
-* select_related() (passed to the queryset)
-* group_by(field, field, field)
-* set_options(index='', weights={}, weights=[], mode='SPH_MODE_*', rankmode='SPH_MATCH_*')
 
-The django-sphinx layer also supports some basic querying over multiple indexes. To use this you first need to understand the rules of a UNION. Your indexes must contain exactly the same fields. These fields must also include a `content_type` selection which should be the content_type id associated with that table (model).
+* ``count()``
+* ``extra()`` (passed to the queryset)
+* ``all()`` (does nothing)
+* ``select_related()`` (passed to the queryset)
+* ``group_by(field, field, field)``
+* ``set_options(index='', weights={}, weights=[], mode='SPH_MATCH_*', rankmode='SPH_RANK_*')``
+
+The django-sphinx layer also supports some basic querying over multiple indexes. To use this you first need to understand the rules of a UNION. Your indexes must contain exactly the same fields. These fields must also include a ``content_type`` selection which should be the content_type id associated with that table (model).
 
 You can then do something like this::
 
@@ -118,7 +131,7 @@ Using the Config Generator
 
 *New in 2.2*
 
-django-sphinx now includes a simply python script to generate a config using your default template renderer. By default, we mean that if `coffin` is included in your INSTALLED_APPS, it uses it, otherwise it uses Django.
+django-sphinx now includes a simply python script to generate a config using your default template renderer. By default, we mean that if ``coffin`` is included in your INSTALLED_APPS, it uses it, otherwise it uses Django.
 
 Two variables directly relate to the config generation:
 
@@ -162,9 +175,9 @@ To use it, see the following example::
 
 Limitations? You know it.
 
-- Only shows your max sphinx results (defaults to 1000)
-- Filters currently don't work.
-- This is a huge hack, so it may or may not continue working when Django updates.
+* Only shows your max sphinx results (defaults to 1000)
+* Filters currently don't work.
+* This is a huge hack, so it may or may not continue working when Django updates.
 
 Frequent Questions
 ------------------

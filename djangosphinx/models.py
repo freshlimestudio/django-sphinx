@@ -20,9 +20,11 @@ __all__ = ('SearchError', 'ConnectionError', 'SphinxSearch', 'SphinxRelation', '
 from django.contrib.contenttypes.models import ContentType
 from datetime import datetime, date
 
+SPHINX_MODELS_FIELDS    = getattr(settings, 'SPHINX_MODELS_FIELDS', None)
+
 # server settings
 SPHINX_SERVER           = getattr(settings, 'SPHINX_SERVER', 'localhost')
-SPHINX_PORT             = int(getattr(settings, 'SPHINX_PORT', 3312))
+SPHINX_PORT             = int(getattr(settings, 'SPHINX_PORT', 9312))
 
 # These require search API 275 (Sphinx 0.9.8)
 SPHINX_RETRIES          = int(getattr(settings, 'SPHINX_RETRIES', 0))
@@ -203,7 +205,7 @@ class SphinxQuerySet(object):
         self._query                 = ''
         self.__metadata             = None
         self._offset                = 0
-        self._limit                 = 20
+        self._limit                 = getattr(settings, 'SPHINX_QUERYSET_CACHE_LIMIT', 20)
 
         self._groupby               = None
         self._sort                  = None
@@ -211,7 +213,7 @@ class SphinxQuerySet(object):
 
         self._passages              = False
         self._passages_opts         = {}
-        self._maxmatches            = 1000
+        self._maxmatches            = getattr(settings, 'SPHINX_MAX_MATCHES', 1000)
         self._result_cache          = None
         self._mode                  = sphinxapi.SPH_MATCH_ALL
         self._rankmode              = getattr(sphinxapi, 'SPH_RANK_PROXIMITY_BM25', None)
@@ -647,14 +649,32 @@ class SphinxQuerySet(object):
     def _get_passages(self, instance, fields, words):
         client = self._get_sphinx_client()
 
-        docs = [getattr(instance, f) for f in fields]
+        index_name = None
+        if SPHINX_MODELS_FIELDS:
+            model_config = SPHINX_MODELS_FIELDS.get('%s.%s' % (instance._meta.app_label, instance._meta.object_name.lower()), {})
+            index_name = model_config.get('index_name', None)
+            fields_dict = model_config.get('fields', {})
+            fields = fields_dict.keys()
+            docs = [reduce(lambda x, y: x + y, ["%s " % getattr(instance, k) for k in fields_dict.get(f, [])], '') for f in fields]
+        else:
+            docs = [getattr(instance, f) for f in fields]
+
+        #Checks if any of the items in 'docs' list are neither strings nor unicode 
+        #objects. Upon finding such ones, converts them to strings with repr()
+        #function and replaces the original value with the converted one.
+        for index, doc in enumerate(docs):
+            if (not (isinstance(doc, str)) and (not isinstance(doc, unicode))):
+                docs[index] = repr(doc)
+            if isinstance(docs[index], unicode):
+                docs[index] = docs[index].encode('utf-8')
+
         if isinstance(self._passages_opts, dict):
             opts = self._passages_opts
         else:
             opts = {}
         if isinstance(self._index, unicode):
             self._index = self._index.encode('utf-8')
-        passages_list = client.BuildExcerpts(docs, self._index, words, opts)
+        passages_list = client.BuildExcerpts(docs, index_name or self._index, words, opts)
         
         passages = {}
         c = 0
@@ -704,9 +724,17 @@ class SphinxInstanceManager(object):
         self._instance = instance
         self._index = index
         
+    def _get_sphinx_client(self):
+        client = sphinxapi.SphinxClient()
+        client.SetServer(SPHINX_SERVER, SPHINX_PORT)
+        return client
+
     def update(self, **kwargs):
         assert sphinxapi.VER_COMMAND_SEARCH >= 0x113, "You must upgrade sphinxapi to version 0.98 to use UpdateAttributes."
-        sphinxapi.UpdateAttributes(self._index, kwargs.keys(), dict(self.instance.pk, map(to_sphinx, kwargs.values())))
+        attributes = {}
+        attributes[int(self._instance.pk)] = map(to_sphinx, kwargs.values())
+        client = self._get_sphinx_client()
+        client.UpdateAttributes(self._index, kwargs.keys(), attributes)
 
 class SphinxSearch(object):
     def __init__(self, index=None, using=None, **kwargs):
