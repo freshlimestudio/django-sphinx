@@ -26,12 +26,12 @@ def _get_database_engine():
     if DJANGO_MINOR_VERSION < 1.2:
         if settings.DATABASE_ENGINE == 'mysql':
             return settings.DATABASE_ENGINE
-        elif settings.DATABASE_ENGINE.startswith('postgresql'):
+        elif settings.DATABASE_ENGINE.startswith('postgresql') or settings.DATABASE_ENGINE.startswith('postgis'):
             return 'pgsql'    
     else:
         if 'mysql' in settings.DATABASES['default']['ENGINE']:
             return 'mysql'
-        elif 'postgresql' in settings.DATABASES['default']['ENGINE']:
+        elif ('postgresql' in settings.DATABASES['default']['ENGINE']) or ('postgis' in settings.DATABASES['default']['ENGINE']):
             return 'pgsql'
     raise ValueError, "Only MySQL and PostgreSQL engines are supported by Sphinx."
 
